@@ -42,6 +42,11 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~57.0.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-testing-library": "^7.16.2",
+    "prettier": "^3.9.9",
     "typescript": "~6.0.3"
   },
   "scripts": {
