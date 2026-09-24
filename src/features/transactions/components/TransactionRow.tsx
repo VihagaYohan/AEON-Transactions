@@ -22,6 +22,7 @@ export const TransactionRow = ({ transaction, onPress }: TransactionRowProps) =>
 
   return (
     <Pressable
+      testID={`transaction-${transaction.refId}`}
       accessibilityRole="button"
       accessibilityLabel={describeTransaction(transaction, hidden)}
       accessibilityHint="Opens transaction details"

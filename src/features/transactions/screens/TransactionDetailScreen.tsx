@@ -1,7 +1,7 @@
 import { ScrollView, View } from 'react-native';
+import { useState } from 'react';
 
 import { formatDateTime } from '@/shared/lib/format';
-import { useTransientFlag } from '@/shared/lib/useTransientFlag';
 import { usePreferencesStore } from '@/shared/store/preferencesStore';
 import { useTheme } from '@/shared/theme/useTheme';
 import { AppText, Button, Card, Screen, SkeletonList, StateView } from '@/shared/ui';
@@ -28,7 +28,7 @@ export const TransactionDetailScreen = ({
 }: TransactionDetailScreenProps) => {
   const { colors, radii, spacing } = useTheme();
   const amountsHidden = usePreferencesStore((state) => state.hideAmounts);
-  const [copied, showCopied] = useTransientFlag();
+  const [copied, setCopied] = useState(false);
   const { data: transaction, isPending, isError, refetch } = useTransaction(refId);
 
   if (!isValidRefId(refId)) {
@@ -83,12 +83,15 @@ export const TransactionDetailScreen = ({
 
   const copyReference = async () => {
     await onCopyReference(transaction.refId);
-    showCopied();
+    setCopied(true);
   };
 
   return (
     <Screen edges={['left', 'right', 'bottom']}>
-      <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg }}>
+      <ScrollView
+        testID="transaction-detail"
+        contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg }}
+      >
         <View style={{ alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.md }}>
           <DirectionIcon direction={transaction.direction} />
           <AppText variant="label" tone="muted">
@@ -110,11 +113,13 @@ export const TransactionDetailScreen = ({
 
         <View style={{ gap: spacing.sm }}>
           <Button
+            testID="copy-reference"
             label={copied ? 'Reference copied' : 'Copy reference'}
             variant="secondary"
             onPress={() => void copyReference()}
           />
           <Button
+            testID="share-transaction"
             label="Share transaction"
             onPress={() => void onShare(transaction)}
             disabled={amountsHidden}

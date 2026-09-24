@@ -11,6 +11,7 @@ export const HideAmountsToggle = () => {
 
   return (
     <Pressable
+      testID="hide-amounts-toggle"
       accessibilityRole="switch"
       accessibilityLabel="Hide amounts"
       accessibilityState={{ checked: hidden }}

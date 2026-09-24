@@ -91,6 +91,7 @@ export const TransactionListScreen = ({ onOpenTransaction }: TransactionListScre
     <Screen>
       {header}
       <FlashList
+        testID="transaction-list"
         data={items}
         keyExtractor={(item) => item.key}
         getItemType={(item) => item.type}
