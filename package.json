@@ -63,7 +63,7 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "test": "cross-env TZ=Asia/Kuala_Lumpur jest --passWithNoTests",
-    "test:ci": "cross-env TZ=Asia/Kuala_Lumpur jest --ci --coverage --passWithNoTests",
+    "test:ci": "cross-env TZ=Asia/Kuala_Lumpur jest --ci --coverage --passWithNoTests --runInBand",
     "test:e2e": "maestro test .maestro/",
     "doctor": "npx expo-doctor",
     "validate": "npm run lint && npm run typecheck && npm run test",
