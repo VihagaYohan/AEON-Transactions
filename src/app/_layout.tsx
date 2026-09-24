@@ -1,4 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
@@ -6,7 +7,11 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { env } from '@/config/env';
 import { createQueryClient, useAppStateFocus } from '@/config/queryClient';
-import { MockTransactionRepository, TransactionRepositoryProvider } from '@/features/transactions';
+import {
+  MockTransactionRepository,
+  OfflineTransactionRepository,
+  TransactionRepositoryProvider,
+} from '@/features/transactions';
 import { PrivacyProtection, SecurityGate } from '@/shared/security';
 import { useTheme } from '@/shared/theme/useTheme';
 
@@ -15,10 +20,13 @@ export default function RootLayout() {
   const [queryClient] = useState(createQueryClient);
   const [repository] = useState(
     () =>
-      new MockTransactionRepository({
-        latencyMs: env.mockLatencyMs,
-        failRate: env.mockFailRate,
-      }),
+      new OfflineTransactionRepository(
+        new MockTransactionRepository({
+          latencyMs: env.mockLatencyMs,
+          failRate: env.mockFailRate,
+        }),
+        AsyncStorage,
+      ),
   );
   const { colors, scheme } = useTheme();
   useAppStateFocus();

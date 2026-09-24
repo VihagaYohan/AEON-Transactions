@@ -2,6 +2,7 @@
 export { TransactionRepositoryProvider } from './data/RepositoryContext';
 export { HttpTransactionRepository } from './data/httpTransactionRepository';
 export { MockTransactionRepository } from './data/mockTransactionRepository';
+export { OfflineTransactionRepository } from './data/offlineTransactionRepository';
 export type { TransactionRepository } from './data/transactionRepository';
 export { isValidRefId, type Transaction } from './domain/transaction';
 export { buildShareMessage } from './domain/describe';
