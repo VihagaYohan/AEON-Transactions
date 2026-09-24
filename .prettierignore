@@ -1,0 +1,8 @@
+node_modules
+coverage
+.expo
+dist
+ios
+android
+package-lock.json
+assets/expo.icon
