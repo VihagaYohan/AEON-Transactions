@@ -1,15 +1,11 @@
 import { ScrollView, View } from 'react-native';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
-import { formatDateTime } from '@/shared/lib/format';
 import { usePreferencesStore } from '@/shared/store/preferencesStore';
 import { useTheme } from '@/shared/theme/useTheme';
-import { AppText, Button, Card, Screen, SkeletonList, StateView } from '@/shared/ui';
+import { AppText, Button, Screen, SkeletonList, StateView } from '@/shared/ui';
 
-import { AmountText } from '../components/AmountText';
-import { DetailField } from '../components/DetailField';
-import { DirectionIcon } from '../components/DirectionIcon';
-import { counterpartyLabel } from '../domain/describe';
+import { TransactionReceipt } from '../components/TransactionReceipt';
 import { isValidRefId, type Transaction } from '../domain/transaction';
 import { useTransaction } from '../hooks/useTransactions';
 
@@ -17,6 +13,7 @@ export interface TransactionDetailScreenProps {
   refId: string;
   onCopyReference: (refId: string) => Promise<void>;
   onShare: (transaction: Transaction) => Promise<void>;
+  onShareReceipt: (transaction: Transaction, view: View) => Promise<void>;
   onGoBack: () => void;
 }
 
@@ -24,11 +21,15 @@ export const TransactionDetailScreen = ({
   refId,
   onCopyReference,
   onShare,
+  onShareReceipt,
   onGoBack,
 }: TransactionDetailScreenProps) => {
   const { colors, radii, spacing } = useTheme();
   const amountsHidden = usePreferencesStore((state) => state.hideAmounts);
   const [copied, setCopied] = useState(false);
+  const [isSharingReceipt, setIsSharingReceipt] = useState(false);
+  const [receiptError, setReceiptError] = useState(false);
+  const receiptRef = useRef<View>(null);
   const { data: transaction, isPending, isError, refetch } = useTransaction(refId);
 
   if (!isValidRefId(refId)) {
@@ -79,11 +80,22 @@ export const TransactionDetailScreen = ({
     );
   }
 
-  const directionLabel = transaction.direction === 'incoming' ? 'Money received' : 'Money sent';
-
   const copyReference = async () => {
     await onCopyReference(transaction.refId);
     setCopied(true);
+  };
+
+  const shareReceipt = async () => {
+    if (!receiptRef.current) return;
+    setIsSharingReceipt(true);
+    setReceiptError(false);
+    try {
+      await onShareReceipt(transaction, receiptRef.current);
+    } catch {
+      setReceiptError(true);
+    } finally {
+      setIsSharingReceipt(false);
+    }
   };
 
   return (
@@ -92,24 +104,7 @@ export const TransactionDetailScreen = ({
         testID="transaction-detail"
         contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg }}
       >
-        <View style={{ alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.md }}>
-          <DirectionIcon direction={transaction.direction} />
-          <AppText variant="label" tone="muted">
-            {directionLabel}
-          </AppText>
-          <AmountText money={transaction.money} variant="display" signed />
-          <AppText variant="title" accessibilityRole="header" style={{ textAlign: 'center' }}>
-            {transaction.name}
-          </AppText>
-        </View>
-
-        <Card style={{ gap: spacing.lg }}>
-          <DetailField label={counterpartyLabel(transaction)} value={transaction.counterparty} />
-          <View style={{ height: 1, backgroundColor: colors.border }} />
-          <DetailField label="Date and time" value={formatDateTime(transaction.date)} />
-          <View style={{ height: 1, backgroundColor: colors.border }} />
-          <DetailField label="Reference ID" value={transaction.refId} testID="reference-id" />
-        </Card>
+        <TransactionReceipt ref={receiptRef} transaction={transaction} />
 
         <View style={{ gap: spacing.sm }}>
           <Button
@@ -120,11 +115,25 @@ export const TransactionDetailScreen = ({
           />
           <Button
             testID="share-transaction"
-            label="Share transaction"
+            label="Share text details"
             onPress={() => void onShare(transaction)}
             disabled={amountsHidden}
             accessibilityHint={amountsHidden ? 'Show amounts before sharing' : undefined}
           />
+          <Button
+            testID="share-receipt"
+            label="Share receipt image"
+            variant="secondary"
+            loading={isSharingReceipt}
+            onPress={() => void shareReceipt()}
+            disabled={amountsHidden}
+            accessibilityHint={amountsHidden ? 'Show amounts before sharing' : undefined}
+          />
+          {receiptError ? (
+            <AppText accessibilityRole="alert" tone="danger" style={{ textAlign: 'center' }}>
+              Could not create the receipt. Please try again.
+            </AppText>
+          ) : null}
           {amountsHidden ? (
             <View
               style={{

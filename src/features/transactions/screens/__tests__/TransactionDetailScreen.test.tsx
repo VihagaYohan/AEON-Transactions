@@ -11,6 +11,7 @@ const defaultProps = {
   refId: '123ABC',
   onCopyReference: jest.fn(() => Promise.resolve()),
   onShare: jest.fn(() => Promise.resolve()),
+  onShareReceipt: jest.fn(() => Promise.resolve()),
   onGoBack: jest.fn(),
 };
 
@@ -46,9 +47,44 @@ describe('TransactionDetailScreen', () => {
     const onShare = jest.fn(() => Promise.resolve());
     await renderWithProviders(<TransactionDetailScreen {...defaultProps} onShare={onShare} />);
 
-    await userEvent.setup().press(await screen.findByRole('button', { name: 'Share transaction' }));
+    await userEvent
+      .setup()
+      .press(await screen.findByRole('button', { name: 'Share text details' }));
 
     expect(onShare).toHaveBeenCalledWith(expect.objectContaining({ refId: '123ABC' }));
+  });
+
+  it('shares a receipt image from the rendered receipt view', async () => {
+    const onShareReceipt = jest.fn(() => Promise.resolve());
+    await renderWithProviders(
+      <TransactionDetailScreen {...defaultProps} onShareReceipt={onShareReceipt} />,
+    );
+
+    await userEvent
+      .setup()
+      .press(await screen.findByRole('button', { name: 'Share receipt image' }));
+
+    await waitFor(() =>
+      expect(onShareReceipt).toHaveBeenCalledWith(
+        expect.objectContaining({ refId: '123ABC' }),
+        expect.anything(),
+      ),
+    );
+  });
+
+  it('shows a recoverable error when receipt creation fails', async () => {
+    const onShareReceipt = jest.fn(() => Promise.reject(new Error('capture failed')));
+    await renderWithProviders(
+      <TransactionDetailScreen {...defaultProps} onShareReceipt={onShareReceipt} />,
+    );
+
+    await userEvent
+      .setup()
+      .press(await screen.findByRole('button', { name: 'Share receipt image' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Could not create the receipt. Please try again.',
+    );
   });
 
   it('does not expose transaction data through sharing when amounts are hidden', async () => {
@@ -56,7 +92,8 @@ describe('TransactionDetailScreen', () => {
     await renderWithProviders(<TransactionDetailScreen {...defaultProps} />);
 
     expect(await screen.findByText('RM ••••')).toBeOnTheScreen();
-    expect(screen.getByRole('button', { name: 'Share transaction' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Share text details' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Share receipt image' })).toBeDisabled();
     expect(screen.getByText(/show amounts on the transaction list/i)).toBeOnTheScreen();
   });
 
