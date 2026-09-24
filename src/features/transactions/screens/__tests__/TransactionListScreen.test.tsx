@@ -1,6 +1,7 @@
 import { screen, userEvent, waitFor } from '@testing-library/react-native';
 
 import { NetworkError } from '@/shared/lib/errors';
+import { initialDataFreshness, useDataFreshnessStore } from '@/shared/store/dataFreshnessStore';
 import { initialPreferences, usePreferencesStore } from '@/shared/store/preferencesStore';
 import { renderWithProviders } from '@/test/render';
 
@@ -8,7 +9,10 @@ import { MockTransactionRepository } from '../../data/mockTransactionRepository'
 import { TransactionListScreen } from '../TransactionListScreen';
 
 describe('TransactionListScreen', () => {
-  beforeEach(() => usePreferencesStore.setState(initialPreferences));
+  beforeEach(() => {
+    usePreferencesStore.setState(initialPreferences);
+    useDataFreshnessStore.setState(initialDataFreshness);
+  });
 
   it('shows a skeleton, then transactions newest first with month headers', async () => {
     const repository = new MockTransactionRepository({ latencyMs: 50 });
@@ -84,5 +88,14 @@ describe('TransactionListScreen', () => {
     await waitFor(() => expect(screen.queryByText('+RM 1,500.00')).not.toBeOnTheScreen());
 
     expect(screen.getAllByText('RM ••••').length).toBeGreaterThan(0);
+  });
+
+  it('clearly labels transactions loaded from offline cache', async () => {
+    useDataFreshnessStore.getState().markCache(new Date('2024-10-15T13:00:00Z'));
+    await renderWithProviders(<TransactionListScreen onOpenTransaction={jest.fn()} />);
+
+    expect(await screen.findByTestId('offline-banner')).toHaveTextContent(
+      'Offline · Showing transactions saved 15 Oct 2024, 9:00 pm',
+    );
   });
 });

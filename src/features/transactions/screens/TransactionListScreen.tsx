@@ -7,6 +7,7 @@ import { AppText, Screen, SkeletonList, StateView } from '@/shared/ui';
 
 import { CashFlowSummary } from '../components/CashFlowSummary';
 import { HideAmountsToggle } from '../components/HideAmountsToggle';
+import { OfflineBanner } from '../components/OfflineBanner';
 import { TransactionRow } from '../components/TransactionRow';
 import { groupByMonth, summarise } from '../domain/operations';
 import type { Transaction } from '../domain/transaction';
@@ -90,6 +91,7 @@ export const TransactionListScreen = ({ onOpenTransaction }: TransactionListScre
   return (
     <Screen>
       {header}
+      <OfflineBanner />
       <FlashList
         testID="transaction-list"
         data={items}
