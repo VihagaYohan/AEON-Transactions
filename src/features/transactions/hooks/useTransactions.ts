@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useTransactionRepository } from '../data/RepositoryContext';
-import type { Transaction } from '../domain/transaction';
+import { isValidRefId, type Transaction } from '../domain/transaction';
 import { transactionKeys } from './queryKeys';
 
 /** Server state for the cached, retried, and focus-refetched transaction list. */
@@ -22,6 +22,7 @@ export const useTransaction = (refId: string) => {
   return useQuery({
     queryKey: transactionKeys.detail(refId),
     queryFn: async () => (await repository.getById(refId)) ?? null,
+    enabled: isValidRefId(refId),
     initialData: () =>
       queryClient
         .getQueryData<Transaction[]>(transactionKeys.all)
