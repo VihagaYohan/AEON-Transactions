@@ -7,3 +7,8 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 jest.mock('expo-localization', () => ({
   getLocales: () => [{ languageTag: 'en-MY' }],
 }));
+
+// FlashList needs native measurement, so tests use FlatList's matching props contract.
+jest.mock('@shopify/flash-list', () => ({
+  FlashList: require('react-native').FlatList,
+}));
