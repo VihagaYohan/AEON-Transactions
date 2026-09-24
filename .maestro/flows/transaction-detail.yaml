@@ -33,4 +33,7 @@ tags:
 - assertVisible:
     id: share-transaction
     enabled: false
+- assertVisible:
+    id: share-receipt
+    enabled: false
 - assertVisible: Show amounts on the transaction list before sharing.
