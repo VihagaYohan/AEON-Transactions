@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { env } from '@/config/env';
 import { createQueryClient, useAppStateFocus } from '@/config/queryClient';
 import { MockTransactionRepository, TransactionRepositoryProvider } from '@/features/transactions';
+import { PrivacyProtection, SecurityGate } from '@/shared/security';
 import { useTheme } from '@/shared/theme/useTheme';
 
 export default function RootLayout() {
@@ -26,18 +27,28 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <TransactionRepositoryProvider repository={repository}>
-          <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-          <Stack
-            screenOptions={{
-              headerStyle: { backgroundColor: colors.background },
-              headerTintColor: colors.accent,
-              headerTitleStyle: { color: colors.text },
-              contentStyle: { backgroundColor: colors.background },
-            }}
-          >
-            <Stack.Screen name="index" options={{ headerShown: false, title: 'Transactions' }} />
-            <Stack.Screen name="transactions/[refId]" options={{ title: 'Transaction details' }} />
-          </Stack>
+          <PrivacyProtection>
+            <SecurityGate>
+              <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+              <Stack
+                screenOptions={{
+                  headerStyle: { backgroundColor: colors.background },
+                  headerTintColor: colors.accent,
+                  headerTitleStyle: { color: colors.text },
+                  contentStyle: { backgroundColor: colors.background },
+                }}
+              >
+                <Stack.Screen
+                  name="index"
+                  options={{ headerShown: false, title: 'Transactions' }}
+                />
+                <Stack.Screen
+                  name="transactions/[refId]"
+                  options={{ title: 'Transaction details' }}
+                />
+              </Stack>
+            </SecurityGate>
+          </PrivacyProtection>
         </TransactionRepositoryProvider>
       </QueryClientProvider>
     </SafeAreaProvider>
