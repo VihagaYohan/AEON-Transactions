@@ -8,3 +8,4 @@ export { isValidRefId, type Transaction } from './domain/transaction';
 export { buildShareMessage } from './domain/describe';
 export { TransactionListScreen } from './screens/TransactionListScreen';
 export { TransactionDetailScreen } from './screens/TransactionDetailScreen';
+export { shareTransactionReceipt } from './services/shareTransactionReceipt';

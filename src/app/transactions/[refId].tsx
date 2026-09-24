@@ -2,7 +2,11 @@ import * as Clipboard from 'expo-clipboard';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Share } from 'react-native';
 
-import { buildShareMessage, TransactionDetailScreen } from '@/features/transactions';
+import {
+  buildShareMessage,
+  shareTransactionReceipt,
+  TransactionDetailScreen,
+} from '@/features/transactions';
 
 export default function TransactionDetailRoute() {
   const params = useLocalSearchParams<{ refId?: string | string[] }>();
@@ -13,6 +17,7 @@ export default function TransactionDetailRoute() {
       refId={refId}
       onGoBack={() => router.back()}
       onCopyReference={(reference) => Clipboard.setStringAsync(reference).then(() => undefined)}
+      onShareReceipt={(_transaction, view) => shareTransactionReceipt(view)}
       onShare={async (transaction) => {
         await Share.share(
           { message: buildShareMessage(transaction), title: 'Transfer details' },
