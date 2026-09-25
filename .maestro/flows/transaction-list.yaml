@@ -6,6 +6,13 @@ tags:
 ---
 - launchApp:
     clearState: true
+- assertVisible: Welcome back
+- tapOn: Username
+- inputText: aeon.demo
+- tapOn: Password
+- inputText: Aeon123!
+- hideKeyboard
+- tapOn: Sign in
 - assertVisible:
     id: transaction-list
 - assertVisible: Transactions

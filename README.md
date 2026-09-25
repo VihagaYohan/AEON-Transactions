@@ -143,3 +143,19 @@ These controls do not replace backend authentication, authorization, TLS, secure
 - Complete the physical-device and assistive-technology certification matrix.
 
 See the [assessment checklist](docs/assessment-checklist.md) for requirement traceability.
+
+## Demo sign-in and branding
+
+Every cold launch starts at the login screen. Use **aeon.demo** / **Aeon123!**.
+These public credentials are only for the sample account; there is no backend authentication.
+Password sign-in works without biometric hardware. A biometric button appears only when
+hardware is supported and biometrics are enrolled. Face ID is named on iOS; Android uses
+Face recognition. On devices supporting multiple methods, the native prompt chooses the
+method. The demo accepts Android Class 2 or Class 3 biometrics, with device-passcode
+fallback disabled. Returning from the background requires explicit sign-in again.
+
+Verify native biometrics on physical devices, including cancellation, lockout and no
+enrollment. Face ID requires a development build (it is not supported in Expo Go).
+The original berry monogram is in `assets/images/aeon-mark.svg`; regenerate the PNG
+assets with `python3 scripts/generate-branding.py`. Rebuild the native app to apply icon
+and splash changes; verify the splash in a release build.
