@@ -7,7 +7,7 @@ These flows exercise the installed development or release build through the nati
 1. Install the Maestro CLI using the official installation instructions.
 2. Start a simulator or emulator.
 3. Install an application build with package or bundle identifier `com.vihangayohan.aeontransactions`.
-4. Use a simulator without enrolled biometrics, or complete the native authentication prompt before the flow continues.
+4. The flows sign in using the demo username and password; biometric enrollment is not required.
 
 ## Run
 

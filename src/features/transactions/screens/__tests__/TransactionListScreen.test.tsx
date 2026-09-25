@@ -5,6 +5,8 @@ import { initialDataFreshness, useDataFreshnessStore } from '@/shared/store/data
 import { initialPreferences, usePreferencesStore } from '@/shared/store/preferencesStore';
 import { renderWithProviders } from '@/test/render';
 
+import sampleResponse from '../../data/__fixtures__/transactions.json';
+
 import { MockTransactionRepository } from '../../data/mockTransactionRepository';
 import { TransactionListScreen } from '../TransactionListScreen';
 
@@ -15,7 +17,7 @@ describe('TransactionListScreen', () => {
   });
 
   it('shows a skeleton, then transactions newest first with month headers', async () => {
-    const repository = new MockTransactionRepository({ latencyMs: 50 });
+    const repository = new MockTransactionRepository({ latencyMs: 50, payload: sampleResponse });
     await renderWithProviders(<TransactionListScreen onOpenTransaction={jest.fn()} />, {
       repository,
     });
@@ -51,7 +53,7 @@ describe('TransactionListScreen', () => {
   });
 
   it('recovers from an error when the user retries', async () => {
-    const repository = new MockTransactionRepository({ latencyMs: 0 });
+    const repository = new MockTransactionRepository({ latencyMs: 0, payload: sampleResponse });
     const realList = repository.list.bind(repository);
     const list = jest
       .spyOn(repository, 'list')

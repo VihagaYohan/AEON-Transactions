@@ -2,7 +2,7 @@ import { NetworkError } from '@/shared/lib/errors';
 
 import { sortNewestFirst } from '../domain/operations';
 import type { Transaction } from '../domain/transaction';
-import sampleResponse from './__fixtures__/transactions.json';
+import { demoTransactionsResponse } from './demoTransactions';
 import { parseTransactionsResponse } from './mapper';
 import type { TransactionRepository } from './transactionRepository';
 
@@ -23,7 +23,7 @@ const wait = (milliseconds: number): Promise<void> =>
     : Promise.resolve();
 
 /**
- * Serves the assessment response through the same validation and mapping path
+ * Serves the expanded demo response through the same validation and mapping path
  * that a real HTTP repository uses.
  */
 export class MockTransactionRepository implements TransactionRepository {
@@ -35,7 +35,7 @@ export class MockTransactionRepository implements TransactionRepository {
   constructor({
     latencyMs = 600,
     failRate = 0,
-    payload = sampleResponse,
+    payload = demoTransactionsResponse,
     random = Math.random,
   }: MockRepositoryOptions = {}) {
     this.latencyMs = latencyMs;

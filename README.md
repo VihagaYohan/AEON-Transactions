@@ -159,3 +159,13 @@ enrollment. Face ID requires a development build (it is not supported in Expo Go
 The original berry monogram is in `assets/images/aeon-mark.svg`; regenerate the PNG
 assets with `python3 scripts/generate-branding.py`. Rebuild the native app to apply icon
 and splash changes; verify the splash in a release build.
+
+The default mock feed contains **244 transactions**: the original four assessment
+records plus 240 deterministic samples spanning several months. It includes incoming
+and outgoing payments, repeated counterparties, long descriptions, small and large
+amounts, and stable unique references. The small original fixture remains available
+for focused repository and mapping tests.
+
+Feature branches are stacked in order: `feat/aeon-branding`,
+`feat/demo-login-biometrics`, then `feat/expanded-transactions`. The final branch includes
+all three changes.
