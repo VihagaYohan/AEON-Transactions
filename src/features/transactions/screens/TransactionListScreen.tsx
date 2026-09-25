@@ -1,9 +1,10 @@
 import { FlashList } from '@shopify/flash-list';
+import { useRef, useState } from 'react';
 import { View } from 'react-native';
 
 import { formatMonthYear } from '@/shared/lib/format';
 import { useTheme } from '@/shared/theme/useTheme';
-import { AppText, Screen, SkeletonList, StateView } from '@/shared/ui';
+import { AppText, Button, Screen, SkeletonList, StateView } from '@/shared/ui';
 
 import { CashFlowSummary } from '../components/CashFlowSummary';
 import { HideAmountsToggle } from '../components/HideAmountsToggle';
@@ -12,6 +13,8 @@ import { TransactionRow } from '../components/TransactionRow';
 import { groupByMonth, summarise } from '../domain/operations';
 import type { Transaction } from '../domain/transaction';
 import { useTransactions } from '../hooks/useTransactions';
+
+const PAGE_SIZE = 25;
 
 type ListItem =
   | { type: 'header'; key: string; label: string }
@@ -40,8 +43,29 @@ export const TransactionListScreen = ({ onOpenTransaction }: TransactionListScre
   const { colors, spacing } = useTheme();
   const { data, isPending, isError, refetch, isRefetching } = useTransactions();
 
+  const [visibleLimit, setVisibleLimit] = useState(PAGE_SIZE);
+  const refreshing = useRef(false);
+  const total = data?.length ?? 0;
+  const visibleCount = Math.min(visibleLimit, total);
+  const hasMore = visibleCount < total;
+  const loadMore = () => {
+    if (refreshing.current || isRefetching || !hasMore) return;
+    // Repeated end-reached events in the same render request the same page.
+    setVisibleLimit(Math.min(visibleCount + PAGE_SIZE, total));
+  };
+  const refresh = async () => {
+    if (refreshing.current) return;
+    refreshing.current = true;
+    setVisibleLimit(PAGE_SIZE);
+    try {
+      await refetch();
+    } finally {
+      refreshing.current = false;
+    }
+  };
+
   // React Compiler memoizes these derived values, so manual useMemo calls are unnecessary.
-  const items = data ? toListItems(data) : [];
+  const items = data ? toListItems(data.slice(0, visibleCount)) : [];
   const stickyHeaderIndices = items.flatMap((item, index) =>
     item.type === 'header' ? [index] : [],
   );
@@ -99,7 +123,32 @@ export const TransactionListScreen = ({ onOpenTransaction }: TransactionListScre
         getItemType={(item) => item.type}
         stickyHeaderIndices={stickyHeaderIndices}
         refreshing={isRefetching}
-        onRefresh={() => void refetch()}
+        onRefresh={() => void refresh()}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.3}
+        ListFooterComponent={
+          total > 0 ? (
+            <View style={{ padding: spacing.xl, gap: spacing.md }}>
+              <AppText
+                tone="muted"
+                style={{ textAlign: 'center' }}
+                accessibilityLiveRegion="polite"
+              >
+                {hasMore
+                  ? `Showing ${visibleCount} of ${total} transactions`
+                  : `All ${total} transactions shown`}
+              </AppText>
+              {hasMore ? (
+                <Button
+                  label="Load more"
+                  variant="secondary"
+                  onPress={loadMore}
+                  disabled={isRefetching}
+                />
+              ) : null}
+            </View>
+          ) : null
+        }
         ListHeaderComponent={
           summary ? (
             <View style={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.md }}>
