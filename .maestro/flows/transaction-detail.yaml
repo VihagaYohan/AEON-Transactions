@@ -1,0 +1,46 @@
+appId: com.vihangayohan.aeontransactions
+name: Transaction detail and privacy journey
+tags:
+  - smoke
+  - transactions
+  - privacy
+---
+- launchApp:
+    clearState: true
+- assertVisible: Welcome back
+- tapOn: Username
+- inputText: aeon.demo
+- tapOn: Password
+- inputText: Aeon123!
+- hideKeyboard
+- tapOn: Sign in
+- assertVisible:
+    id: transaction-list
+- tapOn:
+    id: transaction-789GHI
+- assertVisible:
+    id: transaction-detail
+- assertVisible: Refund
+- assertVisible: 789GHI
+- tapOn:
+    id: copy-reference
+- assertVisible: Reference copied
+- back
+- assertVisible:
+    id: transaction-list
+- tapOn:
+    id: hide-amounts-toggle
+- assertVisible: Show amounts
+- assertNotVisible: '+RM 1,500.00'
+- tapOn:
+    id: transaction-123ABC
+- assertVisible:
+    id: transaction-detail
+- assertVisible: 'RM ••••'
+- assertVisible:
+    id: share-transaction
+    enabled: false
+- assertVisible:
+    id: share-receipt
+    enabled: false
+- assertVisible: Show amounts on the transaction list before sharing.

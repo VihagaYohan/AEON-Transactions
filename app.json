@@ -8,15 +8,14 @@
     "scheme": "aeontransactions",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon",
+      "icon": "./assets/images/icon.png",
       "bundleIdentifier": "com.vihangayohan.aeontransactions",
       "supportsTablet": false
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#A3195B",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
@@ -32,16 +31,21 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#A3195B",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 180,
+          "dark": {
+            "backgroundColor": "#1A0710"
+          }
         }
       ],
       "expo-sharing",
       "expo-localization",
       [
         "expo-local-authentication",
-        { "faceIDPermission": "Face ID is used to unlock your transactions." }
+        {
+          "faceIDPermission": "Face ID is used to unlock your transactions."
+        }
       ]
     ],
     "experiments": {

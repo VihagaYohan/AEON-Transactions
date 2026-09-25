@@ -1,6 +1,6 @@
 // https://docs.expo.dev/guides/using-eslint/
 const { defineConfig } = require('eslint/config');
-const expoConfig = require("eslint-config-expo/flat");
+const expoConfig = require('eslint-config-expo/flat');
 const prettierConfig = require('eslint-config-prettier');
 const testingLibrary = require('eslint-plugin-testing-library');
 
@@ -8,9 +8,9 @@ module.exports = defineConfig([
   expoConfig,
   prettierConfig,
   {
-     ignores: ['dist/*', 'coverage/*', '.expo/*'],
+    ignores: ['dist/*', 'coverage/*', '.expo/*'],
   },
-    {
+  {
     files: ['**/*.ts', '**/*.tsx'],
     rules: {
       'no-console': 'error',
@@ -29,7 +29,7 @@ module.exports = defineConfig([
       ],
     },
   },
-    {
+  {
     // Tests and test utilities may reach feature internals.
     files: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'src/test/**'],
     rules: { 'no-restricted-imports': 'off' },

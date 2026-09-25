@@ -1,0 +1,30 @@
+appId: com.vihangayohan.aeontransactions
+name: Transaction list smoke test
+tags:
+  - smoke
+  - transactions
+---
+- launchApp:
+    clearState: true
+- assertVisible: Welcome back
+- tapOn: Username
+- inputText: aeon.demo
+- tapOn: Password
+- inputText: Aeon123!
+- hideKeyboard
+- tapOn: Sign in
+- assertVisible:
+    id: transaction-list
+- assertVisible: Transactions
+- assertVisible: Money in
+- assertVisible: Money out
+- assertVisible:
+    id: transaction-123ABC
+- assertVisible:
+    id: transaction-789GHI
+- tapOn:
+    id: transaction-123ABC
+- assertVisible:
+    id: transaction-detail
+- assertVisible: Salary Payment
+- assertVisible: 123ABC

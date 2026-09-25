@@ -1,17 +1,13 @@
-import { Text, View, StyleSheet } from "react-native";
+import { router } from 'expo-router';
 
-export default function Index() {
+import { TransactionListScreen } from '@/features/transactions';
+
+export default function TransactionsRoute() {
   return (
-    <View style={styles.container}>
-      <Text>Edit src/app/index.tsx to edit this screen.</Text>
-    </View>
+    <TransactionListScreen
+      onOpenTransaction={(refId) =>
+        router.push({ pathname: '/transactions/[refId]', params: { refId } })
+      }
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
