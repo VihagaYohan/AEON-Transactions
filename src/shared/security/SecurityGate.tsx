@@ -1,131 +1,217 @@
-import { useCallback, useEffect, useRef, useState, type PropsWithChildren } from 'react';
-import { ActivityIndicator, AppState, View } from 'react-native';
+import { useEffect, useRef, useState, type PropsWithChildren } from 'react';
+import {
+  AppState,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TextInput,
+  View,
+} from 'react-native';
 
-import { logger } from '@/shared/lib/logger';
 import { useTheme } from '@/shared/theme/useTheme';
 import { AppText, Button, Screen } from '@/shared/ui';
 
 import { deviceBiometricAuthenticator, type BiometricAuthenticator } from './biometrics';
 
-type GateStatus = 'checking' | 'locked' | 'unlocked';
-
 interface SecurityGateProps extends PropsWithChildren {
   authenticator?: BiometricAuthenticator;
 }
 
-const authenticationMessage = (error?: string): string => {
-  if (error === 'user_cancel' || error === 'system_cancel' || error === 'app_cancel') {
-    return 'Authentication was cancelled.';
-  }
-  if (error === 'lockout') return 'Biometric authentication is temporarily locked.';
-  return 'We could not verify your identity.';
-};
+/** Demo only: never use client-side credentials as production authentication. */
+export const DEMO_CREDENTIALS = { username: 'aeon.demo', password: 'Aeon123!' } as const;
 
-/** Protects app content without storing or handling any biometric information. */
+/** All routes remain unmounted until the user explicitly signs in. */
 export const SecurityGate = ({
   children,
   authenticator = deviceBiometricAuthenticator,
 }: SecurityGateProps) => {
-  const { colors, spacing } = useTheme();
-  const [status, setStatus] = useState<GateStatus>('checking');
+  const { colors, spacing, radii } = useTheme();
+  const [unlocked, setUnlocked] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [methods, setMethods] = useState<string[]>([]);
   const [message, setMessage] = useState<string>();
+  const [busy, setBusy] = useState(false);
   const authenticating = useRef(false);
-  const relockOnActive = useRef(false);
+  const mounted = useRef(true);
+  const passwordInput = useRef<TextInput>(null);
 
-  const unlock = useCallback(async () => {
-    if (authenticating.current) return;
-    authenticating.current = true;
-    setStatus('checking');
-    setMessage(undefined);
-
-    try {
-      if (!(await authenticator.isAvailable())) {
-        setStatus('unlocked');
-        return;
+  useEffect(() => {
+    mounted.current = true;
+    let active = true;
+    const discover = async () => {
+      try {
+        const supported = await authenticator.availableMethods();
+        if (active) setMethods(supported);
+      } catch {
+        if (active) setMethods([]);
       }
-
-      const result = await authenticator.authenticate();
-      if (result.success) {
-        setStatus('unlocked');
-      } else {
-        setMessage(authenticationMessage(result.error));
-        setStatus('locked');
+    };
+    void discover();
+    const subscription = AppState.addEventListener('change', (state) => {
+      // Native biometric prompts can temporarily change app state.
+      if (state === 'background' && !authenticating.current) {
+        setUnlocked(false);
+        setPassword('');
+        setMessage(undefined);
       }
-    } catch {
-      logger.warn('Device authentication unavailable');
-      setMessage('Device authentication is currently unavailable.');
-      setStatus('locked');
-    } finally {
-      authenticating.current = false;
-    }
+      if (state === 'active') void discover();
+    });
+    return () => {
+      active = false;
+      mounted.current = false;
+      subscription.remove();
+    };
   }, [authenticator]);
 
-  useEffect(() => {
-    const initialAuthentication = setTimeout(() => void unlock(), 0);
-    return () => clearTimeout(initialAuthentication);
-  }, [unlock]);
+  const signIn = () => {
+    if (authenticating.current) return;
+    if (username.trim() !== DEMO_CREDENTIALS.username || password !== DEMO_CREDENTIALS.password) {
+      setMessage('Incorrect username or password. Try the demo credentials below.');
+      return;
+    }
+    setMessage(undefined);
+    setPassword('');
+    setUnlocked(true);
+  };
 
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (nextState) => {
-      if (nextState === 'background') {
-        relockOnActive.current = true;
-        setStatus('locked');
-      } else if (nextState === 'active' && relockOnActive.current) {
-        relockOnActive.current = false;
-        void unlock();
+  const signInWithBiometrics = async () => {
+    if (authenticating.current) return;
+    authenticating.current = true;
+    setBusy(true);
+    setMessage(undefined);
+    try {
+      const result = await authenticator.authenticate();
+      if (!mounted.current || AppState.currentState === 'background') return;
+      if (result.success) {
+        setPassword('');
+        setUnlocked(true);
+      } else {
+        setMessage(
+          result.error?.includes('cancel')
+            ? 'Authentication was cancelled. Try again or use your password.'
+            : 'Biometric sign-in failed. Try again or use your password.',
+        );
       }
-    });
+    } catch {
+      if (mounted.current) setMessage('Biometric sign-in is unavailable. Use your password.');
+    } finally {
+      authenticating.current = false;
+      if (mounted.current) setBusy(false);
+    }
+  };
 
-    return () => subscription.remove();
-  }, [unlock]);
+  if (unlocked) return children;
 
-  if (status === 'unlocked') return children;
+  const inputStyle = {
+    minHeight: 52,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.lg,
+    color: colors.text,
+    backgroundColor: colors.surface,
+    fontSize: 16,
+  };
 
   return (
-    <Screen>
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: spacing.xl,
-          gap: spacing.lg,
-        }}
+    <Screen edges={['top', 'bottom', 'left', 'right']}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: 32,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: colors.surfaceMuted,
-          }}
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: spacing.xl }}
         >
-          <AppText variant="title" tone="accent">
-            AEON
-          </AppText>
-        </View>
-        <AppText variant="title" accessibilityRole="header" style={{ textAlign: 'center' }}>
-          Transactions locked
-        </AppText>
-        {status === 'checking' ? (
-          <ActivityIndicator
-            accessibilityLabel="Authenticating"
-            color={colors.accent}
-            size="large"
-          />
-        ) : (
-          <>
-            <AppText tone="muted" style={{ textAlign: 'center' }}>
-              {message ?? 'Authenticate to view your transactions.'}
-            </AppText>
-            <Button label="Unlock" onPress={() => void unlock()} />
-          </>
-        )}
-      </View>
+          <View style={{ width: '100%', maxWidth: 420, alignSelf: 'center', gap: spacing.xl }}>
+            <View style={{ gap: spacing.sm }}>
+              <Image
+                source={require('../../../assets/images/icon.png')}
+                accessibilityLabel="AEON app logo"
+                style={{ width: 76, height: 76, borderRadius: radii.lg, marginBottom: spacing.lg }}
+              />
+              <AppText variant="label" tone="accent">
+                AEON · EVERYDAY BANKING
+              </AppText>
+              <AppText variant="display" accessibilityRole="header">
+                Welcome back
+              </AppText>
+              <AppText tone="muted">Sign in to see your transactions.</AppText>
+            </View>
+            <View style={{ gap: spacing.md }}>
+              <AppText variant="label">Username</AppText>
+              <TextInput
+                accessibilityLabel="Username"
+                autoCapitalize="none"
+                autoCorrect={false}
+                textContentType="username"
+                autoComplete="username"
+                placeholder="Enter your username"
+                placeholderTextColor={colors.textMuted}
+                value={username}
+                onChangeText={setUsername}
+                editable={!busy}
+                returnKeyType="next"
+                onSubmitEditing={() => passwordInput.current?.focus()}
+                style={inputStyle}
+              />
+              <AppText variant="label">Password</AppText>
+              <TextInput
+                ref={passwordInput}
+                accessibilityLabel="Password"
+                autoCapitalize="none"
+                autoCorrect={false}
+                secureTextEntry
+                textContentType="password"
+                autoComplete="current-password"
+                placeholder="Enter your password"
+                placeholderTextColor={colors.textMuted}
+                value={password}
+                onChangeText={setPassword}
+                editable={!busy}
+                returnKeyType="go"
+                onSubmitEditing={signIn}
+                style={inputStyle}
+              />
+              {message ? (
+                <AppText accessibilityRole="alert" style={{ color: colors.danger }}>
+                  {message}
+                </AppText>
+              ) : null}
+              <Button
+                label="Sign in"
+                onPress={signIn}
+                disabled={busy || !username.trim() || !password}
+              />
+              {methods.length > 0 ? (
+                <Button
+                  label={`Sign in with ${methods.join(' or ')}`}
+                  variant="secondary"
+                  loading={busy}
+                  onPress={() => void signInWithBiometrics()}
+                />
+              ) : null}
+            </View>
+            <View
+              style={{
+                padding: spacing.lg,
+                borderRadius: radii.md,
+                backgroundColor: colors.surfaceMuted,
+                gap: spacing.xs,
+              }}
+            >
+              <AppText variant="label">Try the demo</AppText>
+              <AppText tone="muted">Username: {DEMO_CREDENTIALS.username}</AppText>
+              <AppText tone="muted">Password: {DEMO_CREDENTIALS.password}</AppText>
+              <AppText variant="caption" tone="muted">
+                Sample account only. No real banking data.
+              </AppText>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </Screen>
   );
 };
