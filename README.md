@@ -46,6 +46,11 @@ npm run android
 
 Use `npm run start` with Expo Go or an existing development build. On macOS, use `npm run ios` for the iOS Simulator. Native builds are recommended for biometrics, screen privacy, receipt capture, and Maestro. The `ios/` and `android/` directories use Expo Continuous Native Generation and must not be edited manually.
 
+```bash
+npx expo run:ios --device --configuration Release
+npx expo run:android --device
+```
+
 ## Runtime configuration
 
 Only non-secret mock controls use `EXPO_PUBLIC_*` variables. Expo embeds them in the application bundle, so they must never contain credentials.
