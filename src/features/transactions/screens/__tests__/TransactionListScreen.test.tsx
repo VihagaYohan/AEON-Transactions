@@ -1,9 +1,12 @@
-import { screen, userEvent, waitFor } from '@testing-library/react-native';
+/* eslint-disable testing-library/no-await-sync-events -- RNTL 14 fireEvent is asynchronous. */
+import { fireEvent, screen, userEvent, waitFor } from '@testing-library/react-native';
 
 import { NetworkError } from '@/shared/lib/errors';
 import { initialDataFreshness, useDataFreshnessStore } from '@/shared/store/dataFreshnessStore';
 import { initialPreferences, usePreferencesStore } from '@/shared/store/preferencesStore';
 import { renderWithProviders } from '@/test/render';
+
+import sampleResponse from '../../data/__fixtures__/transactions.json';
 
 import { MockTransactionRepository } from '../../data/mockTransactionRepository';
 import { TransactionListScreen } from '../TransactionListScreen';
@@ -15,7 +18,7 @@ describe('TransactionListScreen', () => {
   });
 
   it('shows a skeleton, then transactions newest first with month headers', async () => {
-    const repository = new MockTransactionRepository({ latencyMs: 50 });
+    const repository = new MockTransactionRepository({ latencyMs: 50, payload: sampleResponse });
     await renderWithProviders(<TransactionListScreen onOpenTransaction={jest.fn()} />, {
       repository,
     });
@@ -51,7 +54,7 @@ describe('TransactionListScreen', () => {
   });
 
   it('recovers from an error when the user retries', async () => {
-    const repository = new MockTransactionRepository({ latencyMs: 0 });
+    const repository = new MockTransactionRepository({ latencyMs: 0, payload: sampleResponse });
     const realList = repository.list.bind(repository);
     const list = jest
       .spyOn(repository, 'list')
@@ -97,5 +100,31 @@ describe('TransactionListScreen', () => {
     expect(await screen.findByTestId('offline-banner')).toHaveTextContent(
       'Offline · Showing transactions saved 15 Oct 2024, 9:00 pm',
     );
+  });
+  it('paginates the demo feed, preserves totals and resets on refresh', async () => {
+    const repository = new MockTransactionRepository({ latencyMs: 0 });
+    const list = jest.spyOn(repository, 'list');
+    await renderWithProviders(<TransactionListScreen onOpenTransaction={jest.fn()} />, {
+      repository,
+    });
+    expect(await screen.findByText('Showing 25 of 244 transactions')).toBeOnTheScreen();
+    const moneyIn = screen.getByText('+RM 79,828.29');
+    expect(moneyIn).toBeOnTheScreen();
+    await userEvent.setup().press(screen.getByRole('button', { name: 'Load more' }));
+    expect(screen.getByText('Showing 50 of 244 transactions')).toBeOnTheScreen();
+    await fireEvent(screen.getByTestId('transaction-list'), 'endReached');
+    expect(screen.getByText('Showing 75 of 244 transactions')).toBeOnTheScreen();
+    for (let page = 0; page < 7; page += 1) {
+      await fireEvent(screen.getByTestId('transaction-list'), 'endReached');
+    }
+    expect(screen.getByText('All 244 transactions shown')).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Load more' })).toBeNull();
+    await fireEvent(screen.getByTestId('transaction-list'), 'endReached');
+    expect(screen.getByText('All 244 transactions shown')).toBeOnTheScreen();
+    expect(screen.getByText('+RM 79,828.29')).toBeOnTheScreen();
+    expect(list).toHaveBeenCalledTimes(1);
+    await fireEvent(screen.getByTestId('transaction-list'), 'refresh');
+    expect(await screen.findByText('Showing 25 of 244 transactions')).toBeOnTheScreen();
+    await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
   });
 });

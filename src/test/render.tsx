@@ -3,6 +3,8 @@ import { render } from '@testing-library/react-native';
 import type { ReactElement } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import sampleResponse from '@/features/transactions/data/__fixtures__/transactions.json';
+
 import { TransactionRepositoryProvider } from '@/features/transactions/data/RepositoryContext';
 import { MockTransactionRepository } from '@/features/transactions/data/mockTransactionRepository';
 import type { TransactionRepository } from '@/features/transactions/data/transactionRepository';
@@ -26,7 +28,7 @@ interface Options {
 export const renderWithProviders = async (
   ui: ReactElement,
   {
-    repository = new MockTransactionRepository({ latencyMs: 0 }),
+    repository = new MockTransactionRepository({ latencyMs: 0, payload: sampleResponse }),
     queryClient = createTestQueryClient(),
   }: Options = {},
 ) => {
